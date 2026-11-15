@@ -236,7 +236,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 <script>
 (function(){
 const EQ=["is the same as","is the same thing as","is the same type as","is in the same location as","is the same meaning as","is the same classification as","is the same value as","is in the same region as","is the same amount as","is the same size as","is the same altitude as","is the same category as"];
-const SYM=["is next to","is across from","is directly-connected to","is opposite from","is the same distance from","is touching"];
+const SYM=["interacts with","is compatible with","is directly-connected to","is associated with","is the same distance each way from","is touching","is mutually dependent on","trades with","has an agreement with","exhanges with"];
 const ORD=[
   [["is more than","is less than"],["is greater than","is less than"]],
   [["occurs later than","occurs prior to"],["occurs after","occurs before"]],
@@ -244,7 +244,13 @@ const ORD=[
   [["is bigger than","is smaller than"]],
   [["is left of","is right of"]],
   [["is on top of","is below"]],
-  [["is in front of","is behind"]]
+  [["is older than","is younger than"]],
+  [["weighs more","weighs less than"]],
+  [["is closer than","is farther than"]],
+  [["is cheaper than","is more expensive than"]],
+  [["holds more than","holds less than"]],
+  [["has capacity is higher than","has a lower capacity than"]],
+  [["finishes before","finishes after"]]
 ];
 const LETTERS="ABCDEFGHJKLMNPQRSTUVWXYZ".split("");
 const TYPENAME={eq:"Equivalence",sym:"Symmetric",ord:"Strict order"};
