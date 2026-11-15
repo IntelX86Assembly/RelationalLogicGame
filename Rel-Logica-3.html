@@ -1,0 +1,562 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Rel-Logica</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one centered working column — controls strip, premises "ledger", a large conclusion card, then the worked verdict. */
+:root{
+  --paper:#F1F3F6; --surface:#FFFFFF; --ink:#18202C; --muted:#5B6576; --line:#D7DCE4;
+  --eq:#0E7A72; --eq-bg:#E1F3F1;
+  --sym:#A8670F; --sym-bg:#FBEFD9;
+  --ord:#4A4CC4; --ord-bg:#E8E8FB;
+  --conn:#8B2FC9; --brk:#D9541E;
+  --good:#23824A; --good-bg:#E2F4E8; --bad:#C23B33; --bad-bg:#FBE5E3;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#11151C; --surface:#1A2029; --ink:#E4E9F0; --muted:#97A1B1; --line:#2C3542;
+    --eq:#4CC3B8; --eq-bg:#123532; --sym:#E4A94C; --sym-bg:#3A2A10; --ord:#9A9CF7; --ord-bg:#24254A;
+    --conn:#C08CFF; --brk:#FF8A5B; --good:#5BCB86; --good-bg:#143222; --bad:#F27C73; --bad-bg:#3B1A18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#11151C; --surface:#1A2029; --ink:#E4E9F0; --muted:#97A1B1; --line:#2C3542;
+  --eq:#4CC3B8; --eq-bg:#123532; --sym:#E4A94C; --sym-bg:#3A2A10; --ord:#9A9CF7; --ord-bg:#24254A;
+  --conn:#C08CFF; --brk:#FF8A5B; --good:#5BCB86; --good-bg:#143222; --bad:#F27C73; --bad-bg:#3B1A18;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:24px 64px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--ord);outline-offset:2px}
+
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.2rem,6vw,3.1rem);line-height:1;margin:0;letter-spacing:-.02em}
+.brand h1 .r{color:var(--eq)} .brand h1 .e{color:var(--sym)} .brand h1 .l{color:var(--ord)}
+.brand p{margin:6px 0 0;color:var(--muted);font-size:.95rem}
+.stats{display:flex;gap:18px;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stat{display:flex;flex-direction:column;align-items:flex-end}
+.stat b{font-size:1.35rem;font-weight:600;line-height:1.1}
+.stat span{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+
+/* controls */
+.controls{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.controls summary{list-style:none;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:700}
+.controls summary::-webkit-details-marker{display:none}
+.controls summary small{font-family:var(--f-mono);font-weight:400;color:var(--muted);font-size:.78rem}
+.ctl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 24px;padding:4px 16px 18px;border-top:1px solid var(--line);padding-top:16px}
+.ctl label,.ctl .lbl{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stepper button{width:36px;height:34px;background:transparent;border:0;font-size:1.1rem}
+.stepper button:hover{background:var(--paper)}
+.stepper output{min-width:38px;text-align:center;font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 11px;font-size:.85rem;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip.t-eq[aria-pressed="true"]{background:var(--eq);border-color:var(--eq);color:var(--surface)}
+.chip.t-sym[aria-pressed="true"]{background:var(--sym);border-color:var(--sym);color:var(--surface)}
+.chip.t-ord[aria-pressed="true"]{background:var(--ord);border-color:var(--ord);color:var(--surface)}
+.chip .mono{font-family:var(--f-mono)}
+
+/* board */
+.board{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.domain{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-family:var(--f-mono);font-size:.9rem}
+.domain .set{color:var(--ink)}
+.domain .rels{color:var(--muted)}
+.premises{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.prem{display:grid;grid-template-columns:44px 1fr;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.prem .pn{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.prem .txt{font-size:1.05rem}
+.prem .meta{grid-column:2;display:flex;gap:8px;align-items:center;font-size:.75rem;color:var(--muted)}
+.badge{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:1px 7px;border-radius:4px}
+.badge.t-eq{color:var(--eq);background:var(--eq-bg)} .badge.t-sym{color:var(--sym);background:var(--sym-bg)} .badge.t-ord{color:var(--ord);background:var(--ord-bg)}
+.hide-types .badge,.hide-types .meta{display:none}
+.v{font-family:var(--f-mono);font-weight:600}
+.rel{border-bottom:2px solid currentColor;padding-bottom:1px}
+.rel.t-eq{color:var(--eq)} .rel.t-sym{color:var(--sym)} .rel.t-ord{color:var(--ord)}
+.hide-types .rel{color:var(--ink);border-bottom-color:var(--line)}
+
+.conc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px clamp(16px,4vw,30px) 24px;display:flex;flex-direction:column;gap:18px;margin-top:6px}
+.formula{font-size:clamp(1.15rem,2.6vw,1.45rem);line-height:2.1}
+.atom{white-space:normal;padding:2px 6px;border-radius:5px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.atom.t-eq{background:var(--eq-bg)} .atom.t-sym{background:var(--sym-bg)} .atom.t-ord{background:var(--ord-bg)}
+.hide-types .atom{background:var(--paper)}
+.not{color:var(--conn);font-weight:700}
+.qw{font-weight:700;font-style:italic}
+.qv{font-family:var(--f-mono);font-style:italic}
+.qs{font-family:var(--f-mono);font-weight:600}
+.cn{font-family:var(--f-display);font-weight:800;color:var(--conn);letter-spacing:.01em}
+.sym .cn{font-family:var(--f-mono);font-weight:600;padding:0 .15em}
+.grp::before,.grp::after{font-family:var(--f-mono);font-weight:600;font-size:1.15em}
+.formula .grp::before{content:"["} .formula .grp::after{content:"]"}
+.formula.sym .grp::before{content:"("} .formula.sym .grp::after{content:")"}
+.grp::before,.grp::after{color:var(--brk)}
+.ask{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.ask .q{font-family:var(--f-display);font-weight:600;font-size:1.1rem;margin-right:auto}
+.tf{min-width:120px;padding:12px 22px;border-radius:9px;border:2px solid var(--ink);background:var(--surface);font-family:var(--f-display);font-weight:800;font-size:1.15rem;letter-spacing:.02em}
+.tf:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+.tf:disabled{opacity:.45;cursor:default}
+.tf.picked{opacity:1}
+.tf kbd{font-family:var(--f-mono);font-size:.7rem;font-weight:400;opacity:.6;margin-left:6px}
+
+.verdict{border-radius:12px;padding:18px clamp(16px,4vw,26px);display:flex;flex-direction:column;gap:16px;border:1px solid var(--line);background:var(--surface)}
+.verdict .head{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.verdict .head h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:1.4rem}
+.verdict.ok .head h2{color:var(--good)} .verdict.no .head h2{color:var(--bad)}
+.verdict .time{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.next{margin-left:auto;padding:10px 20px;border-radius:9px;border:0;background:var(--ink);color:var(--paper);font-weight:700}
+.next kbd{font-family:var(--f-mono);font-size:.7rem;opacity:.65;margin-left:6px;font-weight:400}
+.atoms{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.arow{display:grid;grid-template-columns:28px 34px 1fr;gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.arow .lab{font-family:var(--f-mono);font-weight:600;color:var(--conn)}
+.arow .why{grid-column:3;color:var(--muted);font-size:.92rem}
+.tv{font-family:var(--f-mono);font-weight:600;font-size:.8rem;padding:1px 6px;border-radius:4px;text-align:center}
+.tv.T{background:var(--good-bg);color:var(--good)} .tv.F{background:var(--bad-bg);color:var(--bad)}
+.steps{font-family:var(--f-mono);font-size:.9rem;display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+.steps div{white-space:nowrap}
+.steps .k{color:var(--muted)}
+
+.rules{background:transparent;border-top:1px solid var(--line);padding-top:6px}
+.rules summary{cursor:pointer;font-weight:700;padding:8px 0}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:8px 0 4px}
+.rgrid h3{margin:0 0 4px;font-family:var(--f-display);font-size:1.05rem}
+.rgrid .t-eq h3{color:var(--eq)} .rgrid .t-sym h3{color:var(--sym)} .rgrid .t-ord h3{color:var(--ord)} .rgrid .t-conn h3{color:var(--conn)}
+.rgrid ul{margin:0;padding-left:18px;font-size:.92rem;color:var(--muted)}
+.rgrid li b{color:var(--ink);font-family:var(--f-mono);font-weight:600;font-size:.85rem}
+.closed{max-width:65ch;font-size:.92rem;color:var(--muted);margin:6px 0 10px}
+.closed b{color:var(--ink)}
+
+@media (max-width:520px){
+  .tf{flex:1;min-width:0}
+  .ask .q{width:100%}
+  .prem{grid-template-columns:32px 1fr}
+}
+@media (prefers-reduced-motion:no-preference){
+  .verdict{animation:rise .22s ease-out}
+  @keyframes rise{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <div class="brand">
+      <h1><span class="r">Rel</span>-<span class="e">Log</span><span class="l">ica</span></h1>
+      <p>Read the premises. Decide whether the conclusion is true.</p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><b id="st-score">0/0</b><span>Correct</span></div>
+      <div class="stat"><b id="st-streak">0</b><span>Streak</span></div>
+      <div class="stat"><b id="st-best">0</b><span>Best</span></div>
+    </div>
+  </header>
+
+  <details class="controls" id="controls" open>
+    <summary>Puzzle settings <small id="ctl-sum"></small></summary>
+    <div class="ctl-grid">
+      <div class="ctl"><span class="lbl">Premises</span>
+        <div class="stepper"><button id="P-dn" aria-label="Fewer premises">−</button><output id="P-out">3</output><button id="P-up" aria-label="More premises">+</button></div></div>
+      <div class="ctl"><span class="lbl">Atomic statements per premise</span>
+        <div class="stepper"><button id="K-dn" aria-label="Fewer atomic statements">−</button><output id="K-out">2</output><button id="K-up" aria-label="More atomic statements">+</button></div></div>
+      <div class="ctl"><span class="lbl">Statements in the conclusion</span>
+        <div class="stepper"><button id="M-dn" aria-label="Fewer conclusion statements">−</button><output id="M-out">2</output><button id="M-up" aria-label="More conclusion statements">+</button></div></div>
+      <div class="ctl"><span class="lbl">Relation types</span>
+        <div class="chips">
+          <button class="chip t-eq" id="ty-eq" data-ty="eq">Equivalence</button>
+          <button class="chip t-sym" id="ty-sym" data-ty="sym">Symmetric</button>
+          <button class="chip t-ord" id="ty-ord" data-ty="ord">Strict order</button>
+        </div></div>
+      <div class="ctl"><span class="lbl">Connectives</span>
+        <div class="chips">
+          <button class="chip" id="c-and" data-c="and">and <span class="mono">∧</span></button>
+          <button class="chip" id="c-or" data-c="or">or <span class="mono">∨</span></button>
+          <button class="chip" id="c-not" data-c="not">not <span class="mono">¬</span></button>
+          <button class="chip" id="c-xor" data-c="xor">xor <span class="mono">⊕</span></button>
+          <button class="chip" id="c-imp" data-c="imp">if…then <span class="mono">→</span></button>
+          <button class="chip" id="c-iff" data-c="iff">iff <span class="mono">↔</span></button>
+        </div></div>
+      <div class="ctl"><span class="lbl">Display</span>
+        <div class="chips">
+          <button class="chip" id="o-sym">Symbols for connectives</button>
+          <button class="chip" id="o-conv">Use converse phrasing</button>
+          <button class="chip" id="o-types">Show relation types</button>
+          <button class="chip" id="o-self">Ask about self (A R A)</button>
+        </div></div>
+      <div class="ctl"><span class="lbl">Predicate logic</span>
+        <div class="chips">
+          <button class="chip" id="o-quant">Quantifiers <span class="mono">∀ ∃</span></button>
+        </div></div>
+    </div>
+  </details>
+
+  <main class="board" id="board">
+    <div class="domain"><span class="eyebrow">Domain</span><span class="set" id="domain"></span><span class="rels" id="relset"></span></div>
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">Premises</div>
+      <ol class="premises" id="premises"></ol>
+    </div>
+    <section class="conc">
+      <div class="eyebrow">Conclusion</div>
+      <div class="formula" id="formula"></div>
+      <div class="ask">
+        <span class="q">Is this true?</span>
+        <button class="tf" id="btn-T">True<kbd>T</kbd></button>
+        <button class="tf" id="btn-F">False<kbd>F</kbd></button>
+      </div>
+    </section>
+    <section class="verdict" id="verdict" hidden></section>
+  </main>
+
+  <details class="rules" id="rules">
+    <summary>How the relations behave</summary>
+    <p class="closed"><b>Closed world.</b> A statement holds only if a premise states it or the relation's properties force it. Anything else is false. Each phrase is its own relation, so “is the same type as” tells you nothing about “is the same size as”.</p>
+    <div class="rgrid">
+      <div class="t-eq"><h3>Equivalence</h3><ul>
+        <li>Reflexive: <b>aRa</b></li><li>Symmetric: <b>aRb ⇒ bRa</b></li><li>Transitive: <b>aRb, bRc ⇒ aRc</b></li></ul></div>
+      <div class="t-sym"><h3>Symmetric</h3><ul>
+        <li>Symmetric: <b>aRb ⇒ bRa</b></li><li>Excludes self: <b>aRa</b> is false</li><li>Not transitive: <b>aRb, bRc</b> says nothing about <b>aRc</b></li></ul></div>
+      <div class="t-ord"><h3>Strict order</h3><ul>
+        <li>Irreflexive: <b>aRa</b> is false</li><li>Asymmetric: <b>aRb ⇒ ¬bRa</b></li><li>Transitive: <b>aRb, bRc ⇒ aRc</b></li><li>Converse: “a is less than b” means “b is more than a”</li></ul></div>
+      <div class="t-conn"><h3>Connectives</h3><ul>
+        <li><b>p ⊕ q</b> exactly one is true</li><li><b>p → q</b> false only when p is true and q is false</li><li><b>p ↔ q</b> both have the same value</li></ul></div>
+      <div class="t-conn"><h3>Quantifiers</h3><ul>
+        <li>They range over the domain listed at the top</li><li><b>∃</b> “some”: true if one witness exists</li><li><b>∀</b> “every”: false if one counterexample exists</li><li>“Other” and “besides Q” leave that element out</li><li><b>¬∃x P ≡ ∀x ¬P</b>, <b>¬∀x P ≡ ∃x ¬P</b></li></ul></div>
+    </div>
+  </details>
+</div>
+
+<script>
+(function(){
+const EQ=["is the same as","is the same thing as","is the same type as","is in the same location as","is the same meaning as","is the same classification as","is the same value as","is in the same region as","is the same amount as","is the same size as","is the same altitude as","is the same category as"];
+const SYM=["is next to","is across from","is directly-connected to","is opposite from","is the same distance from","is touching"];
+const ORD=[
+  [["is more than","is less than"],["is greater than","is less than"]],
+  [["occurs later than","occurs prior to"],["occurs after","occurs before"]],
+  [["contains",null]],
+  [["is bigger than","is smaller than"]],
+  [["is left of","is right of"]],
+  [["is on top of","is below"]],
+  [["is in front of","is behind"]]
+];
+const LETTERS="ABCDEFGHJKLMNPQRSTUVWXYZ".split("");
+const TYPENAME={eq:"Equivalence",sym:"Symmetric",ord:"Strict order"};
+const OPSYM={and:"∧",or:"∨",xor:"⊕",imp:"→",iff:"↔"};
+const LABELS=["p","q","r","s"];
+
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const $=id=>document.getElementById(id);
+
+const DEF={P:3,K:2,M:2,types:{eq:true,sym:true,ord:true},c:{and:true,or:true,not:true,xor:true,imp:true,iff:true},symbols:false,conv:true,showTypes:true,self:true,quant:true};
+const LIM={P:[1,10],K:[1,6],M:[1,4]};
+let S=JSON.parse(JSON.stringify(DEF));
+let stats={right:0,total:0,streak:0,best:0};
+try{const raw=localStorage.getItem("relata-v1");if(raw){const d=JSON.parse(raw);if(d.s)S=Object.assign(S,d.s);if(d.stats)stats=Object.assign(stats,d.stats);}}catch(e){}
+function save(){try{localStorage.setItem("relata-v1",JSON.stringify({s:S,stats}))}catch(e){}}
+
+/* ---------- puzzle generation ---------- */
+function makeRel(type,entry,vars,id){
+  const r={id,type,edges:[],conv:null};
+  if(type==="ord"){let [a,b]=pick(entry);if(b&&Math.random()<.5)[a,b]=[b,a];r.phrase=a;r.conv=b;
+    r.rank={};shuffle(vars.slice()).forEach((v,i)=>r.rank[v]=i);}
+  else r.phrase=entry;
+  return r;
+}
+function chain(rel,vars,K){
+  // Strict-order premises are always one connected chain; the others may split into two.
+  const s=(rel.type!=="ord"&&K>=2&&Math.random()<.4)?2:1;
+  let sub=shuffle(vars.slice()).slice(0,K+s);
+  if(rel.type==="ord")sub.sort((a,b)=>rel.rank[a]-rel.rank[b]);
+  const segs=s===1?[sub]:(()=>{const a=2+ri(K-1);return[sub.slice(0,a),sub.slice(a)]})();
+  const out=[];segs.forEach(g=>{for(let i=0;i<g.length-1;i++)out.push([g[i],g[i+1]])});
+  return out;
+}
+function genPuzzle(){
+  const n=S.K+2, vars=shuffle(LETTERS.slice()).slice(0,n);
+  const types=Object.keys(S.types).filter(t=>S.types[t]);
+  const pools={eq:shuffle(EQ.slice()),sym:shuffle(SYM.slice()),ord:shuffle(ORD.slice())};
+  const seq=shuffle(Array.from({length:S.P},(_,i)=>types[i%types.length]));
+  const rels=[],premises=[];
+  seq.forEach(t=>{
+    let rel;
+    if(pools[t].length){rel=makeRel(t,pools[t].pop(),vars,rels.length+1);rels.push(rel);}
+    else rel=pick(rels.filter(r=>r.type===t));
+    const atoms=chain(rel,vars,S.K);rel.edges.push(...atoms);premises.push({rel,atoms});
+  });
+  const used=vars.filter(v=>rels.some(r=>r.edges.some(e=>e.includes(v))));
+  return{vars:used,rels,premises};
+}
+
+/* ---------- semantics ---------- */
+function path(rel,a,b,directed){
+  const adj={};const add=(x,y)=>{(adj[x]=adj[x]||[]).push(y)};
+  rel.edges.forEach(([x,y])=>{add(x,y);if(!directed)add(y,x)});
+  const prev={[a]:null},q=[a];
+  while(q.length){const c=q.shift();if(c===b)break;(adj[c]||[]).forEach(nx=>{if(!(nx in prev)){prev[nx]=c;q.push(nx)}})}
+  if(!(b in prev))return null;
+  const p=[];for(let c=b;c!==null;c=prev[c])p.unshift(c);return p;
+}
+const has=(rel,x,y)=>rel.edges.some(e=>e[0]===x&&e[1]===y);
+function truth(rel,x,y,uc){
+  const P=rel.phrase;
+  if(rel.type==="eq"){
+    if(x===y)return{val:true,cat:"self",why:`Reflexive: anything ${P} itself.`};
+    if(has(rel,x,y))return{val:true,cat:"stated",why:"Stated in a premise."};
+    if(has(rel,y,x))return{val:true,cat:"symm",why:`Symmetric: ${y} ${P} ${x} is stated, so the reverse holds.`};
+    const p=path(rel,x,y,false);
+    if(p)return{val:true,cat:"trans",why:`Transitive: ${p.join(" – ")} are linked by “${P}”.`};
+    return{val:false,cat:"none",why:`No chain of “${P}” links ${x} and ${y}, so it does not hold.`};
+  }
+  if(rel.type==="sym"){
+    if(x===y)return{val:false,cat:"self",why:`Excludes self: nothing ${P} itself.`};
+    if(has(rel,x,y))return{val:true,cat:"stated",why:"Stated in a premise."};
+    if(has(rel,y,x))return{val:true,cat:"symm",why:`Symmetric: ${y} ${P} ${x} is stated, so the reverse holds.`};
+    const nb=v=>rel.edges.flatMap(([a,b])=>a===v?[b]:b===v?[a]:[]);
+    const m=nb(x).find(z=>nb(y).includes(z));
+    if(m)return{val:false,cat:"trap",why:`Not transitive: ${x}–${m} and ${m}–${y} are linked, but that says nothing about ${x} and ${y}. Never stated, so false.`};
+    return{val:false,cat:"none",why:"Never stated, so false."};
+  }
+  const f=(a,b)=>{
+    if(a===b)return{val:false,cat:"self",why:`Irreflexive: nothing ${P} itself.`};
+    if(has(rel,a,b))return{val:true,cat:"stated",why:"Stated in a premise."};
+    const p=path(rel,a,b,true);
+    if(p)return{val:true,cat:"trans",why:`Transitive: ${p.join(" → ")} along “${P}”.`};
+    const q=path(rel,b,a,true);
+    if(q)return{val:false,cat:"asym",why:`Asymmetric: ${b} ${P} ${a} holds (${q.join(" → ")}), so ${a} ${P} ${b} cannot.`};
+    return{val:false,cat:"none",why:`${a} and ${b} are never ordered by “${P}”, so false.`};
+  };
+  if(!uc)return f(x,y);
+  const r=f(y,x);r.why=`“${x} ${rel.conv} ${y}” means “${y} ${P} ${x}”. `+r.why;return r;
+}
+const W={eq:{self:.25,stated:1,symm:1.5,trans:3,none:2.5},sym:{self:.25,stated:1.2,symm:2,trap:3,none:1.5},ord:{self:.25,stated:1,trans:3,asym:3,none:1.5}};
+function mkAtom(rel,x,y,uc){return Object.assign({rel,x,y,uc},truth(rel,x,y,uc))}
+function sampleAtom(rel){
+  const vars=[...new Set(rel.edges.flat())];
+  const c=[];
+  vars.forEach(x=>vars.forEach(y=>{
+    if(x===y&&!S.self)return;
+    (rel.conv&&S.conv?[false,true]:[false]).forEach(uc=>{const a=mkAtom(rel,x,y,uc);a.w=W[rel.type][a.cat];c.push(a)});
+  }));
+  let t=Math.random()*c.reduce((s,a)=>s+a.w,0);
+  for(const a of c){t-=a.w;if(t<=0)return a}return c[c.length-1];
+}
+/* Quantified statements. EXL: ∃x≠c xRc  EXR: ∃x≠c cRx  ALLL: ∀x≠c xRc  ALLR: ∀x≠c cRx  EA: ∃x∀y≠x xRy  AE: ∀x∃y≠x xRy */
+const QF=[["EXL",1],["EXR",1],["ALLL",1],["ALLR",1],["EA",.7],["AE",.7]];
+function qAtom(rel,D,form,c,uc){
+  const ph=uc?rel.conv:rel.phrase,T=(x,y)=>truth(rel,x,y,uc),list=a=>a.join(", ");
+  const others=D.filter(v=>v!==c);let val,why;
+  if(form==="EXL"||form==="EXR"||form==="ALLL"||form==="ALLR"){
+    const left=form==="EXL"||form==="ALLL";
+    const t=x=>left?T(x,c):T(c,x),st=x=>left?`${x} ${ph} ${c}`:`${c} ${ph} ${x}`;
+    if(form[0]==="E"){
+      const w=others.find(x=>t(x).val);val=!!w;
+      why=w?`Witness ${w}: ${st(w)}. ${t(w).why}`:`No witness among ${list(others)}. For example, ${st(others[0])} is false. ${t(others[0]).why}`;
+    }else{
+      const ce=others.find(x=>!t(x).val);val=!ce;
+      why=ce?`Counterexample ${ce}: ${st(ce)} is false. ${t(ce).why}`:`Holds for each of ${list(others)}.`;
+    }
+  }else if(form==="EA"){
+    const w=D.find(x=>D.every(y=>y===x||T(x,y).val));val=!!w;
+    why=w?`Witness ${w}: ${w} ${ph} each of ${list(D.filter(y=>y!==w))}.`
+      :"No element works: "+D.map(x=>`${x} fails with ${D.find(y=>y!==x&&!T(x,y).val)}`).join("; ")+".";
+  }else{
+    const partner=x=>D.find(y=>y!==x&&T(x,y).val),ce=D.find(x=>!partner(x));val=!ce;
+    why=ce?`Counterexample ${ce}: there is no other element that ${ce} ${ph}.`
+      :"Every element has a partner: "+D.map(x=>`${x} ${ph} ${partner(x)}`).join("; ")+".";
+  }
+  return{q:form,rel,c,uc,x:"",y:"",val,why};
+}
+function sampleQ(rel,D){
+  let t=Math.random()*QF.reduce((s,f)=>s+f[1],0),form=QF[0][0];
+  for(const [f,w] of QF){t-=w;if(t<=0){form=f;break}}
+  const relVars=[...new Set(rel.edges.flat())];
+  return qAtom(rel,D,form,pick(relVars),!!(rel.conv&&S.conv&&Math.random()<.3));
+}
+function key(a){
+  if(a.q)return`q|${a.rel.id}|${a.q}|${a.q==="EA"||a.q==="AE"?"":a.c}|${a.uc?1:0}`;
+  if(a.rel.type==="ord")return a.rel.id+"|"+(a.uc?a.y+a.x:a.x+a.y);
+  return a.rel.id+"|"+[a.x,a.y].sort().join("");
+}
+function genConclusion(pz){
+  const B=["and","or","xor","imp","iff"].filter(c=>S.c[c]),notOn=S.c.not;
+  const m=B.length?S.M:1;
+  const atoms=[],keys=new Set(),used=new Set();
+  const push=a=>{const k=key(a);if(keys.has(k))return false;keys.add(k);used.add(a.rel);atoms.push(a);return true};
+  if(m>=(S.quant?3:2)&&pz.rels.length>=2&&Math.random()<.35){
+    const rs=shuffle(pz.rels.slice()).slice(0,S.quant?m-1:m);
+    const common=pz.vars.filter(v=>rs.every(r=>r.edges.some(e=>e.includes(v))));
+    if(common.length>=2){const [x,y]=shuffle(common);
+      rs.forEach(r=>push(mkAtom(r,x,y,!!(r.conv&&S.conv&&Math.random()<.5))));}
+  }
+  let tries=0;
+  while(atoms.length<m&&tries++<200){
+    const un=pz.rels.filter(r=>!used.has(r));
+    const r=un.length?pick(un):pick(pz.rels);
+    const wantQ=S.quant&&((atoms.length===m-1&&!atoms.some(a=>a.q))||Math.random()<.35);
+    push(wantQ?sampleQ(r,pz.vars):sampleAtom(r));
+  }
+  atoms.forEach((a,i)=>a.label=LABELS[i]);
+  const build=list=>{
+    if(list.length===1)return{k:"atom",a:list[0],neg:notOn&&Math.random()<(m===1?.5:.3)};
+    const s=1+ri(list.length-1);
+    return{k:"op",op:pick(B),l:build(list.slice(0,s)),r:build(list.slice(s)),neg:notOn&&Math.random()<.2};
+  };
+  return{atoms,tree:build(shuffle(atoms.slice()))};
+}
+function evaluate(n){
+  if(n.k==="atom")n.raw=n.a.val;
+  else{const l=evaluate(n.l),r=evaluate(n.r);
+    n.raw={and:l&&r,or:l||r,xor:l!==r,imp:!l||r,iff:l===r}[n.op];}
+  n.v=n.neg?!n.raw:n.raw;return n.v;
+}
+
+/* ---------- rendering ---------- */
+function phraseOf(a){return a.uc?a.rel.conv:a.rel.phrase}
+function negPhrase(p){
+  if(p.startsWith("is "))return'is <span class="not">not</span> '+p.slice(3);
+  if(p.startsWith("occurs "))return'<span class="not">does not</span> occur '+p.slice(7);
+  if(p==="contains")return'<span class="not">does not</span> contain';
+  return'<span class="not">not</span> '+p;
+}
+function qHTML(a,neg,sym,qsym){
+  const ph=phraseOf(a),t=a.rel.type,c=`<span class="v">${a.c}</span>`;
+  const Q=w=>`<span class="qw">${w}</span>`,N=w=>`<span class="not">${w}</span>`;
+  let body;
+  if(qsym){
+    const x='<span class="qv">x</span>',y='<span class="qv">y</span>',q=s=>`<span class="qs">${s}</span>`;
+    body={EXL:`${q("∃")}${x}≠${c} (${x} ${ph} ${c})`,EXR:`${q("∃")}${x}≠${c} (${c} ${ph} ${x})`,
+      ALLL:`${q("∀")}${x}≠${c} (${x} ${ph} ${c})`,ALLR:`${q("∀")}${x}≠${c} (${c} ${ph} ${x})`,
+      EA:`${q("∃")}${x} ${q("∀")}${y}≠${x} (${x} ${ph} ${y})`,AE:`${q("∀")}${x} ${q("∃")}${y}≠${x} (${x} ${ph} ${y})`}[a.q];
+    return(neg&&sym?'<span class="cn">¬</span>':'')+`<span class="atom t-${t}">${body}</span>`;
+  }
+  const n=neg&&!sym;
+  body={
+    EXL:n?`${N("no")} element besides ${c} ${ph} ${c}`:`${Q("some")} element besides ${c} ${ph} ${c}`,
+    ALLL:n?`${N("not")} ${Q("every")} element besides ${c} ${ph} ${c}`:`${Q("every")} element besides ${c} ${ph} ${c}`,
+    EXR:n?`${N("there is no")} other element that ${c} ${ph}`:`${c} ${ph} ${Q("at least one")} other element`,
+    ALLR:n?`${N("it is not the case that")} ${c} ${ph} ${Q("every")} other element`:`${c} ${ph} ${Q("every")} other element`,
+    EA:n?`${N("no")} element ${ph} ${Q("every")} other element`:`${Q("some")} element ${ph} ${Q("every")} other element`,
+    AE:n?`${N("not")} ${Q("every")} element ${ph} ${Q("at least one")} other element`:`${Q("every")} element ${ph} ${Q("at least one")} other element`}[a.q];
+  return(neg&&sym?'<span class="cn">¬</span>':'')+`<span class="atom t-${t}">${body}</span>`;
+}
+function atomHTML(a,neg,sym,qsym=sym){
+  if(a.q)return qHTML(a,neg,sym,qsym);
+  const ph=phraseOf(a),t=a.rel.type;
+  const body=(neg&&!sym)?negPhrase(ph):ph;
+  return(neg&&sym?'<span class="cn">¬</span>':'')+`<span class="atom t-${t}"><span class="v">${a.x}</span> ${body} <span class="v">${a.y}</span></span>`;
+}
+const grp=(h,d)=>`<span class="grp d${d%3}">${h}</span>`;
+function render(n,sym,d){
+  if(n.k==="atom")return atomHTML(n.a,n.neg,sym);
+  const sub=c=>c.k==="op"&&!c.neg?grp(render(c,sym,d+1),d+1):render(c,sym,d+1);
+  const L=sub(n.l),R=sub(n.r);let body;
+  if(sym)body=`${L} <span class="cn">${OPSYM[n.op]}</span> ${R}`;
+  else body={
+    and:`${L} <span class="cn">and</span> ${R}`,
+    or:`${L} <span class="cn">or</span> ${R}`,
+    xor:`<span class="cn">either</span> ${L} <span class="cn">or</span> ${R}<span class="cn">, but not both</span>`,
+    imp:`<span class="cn">if</span> ${L}<span class="cn">, then</span> ${R}`,
+    iff:`${L} <span class="cn">if and only if</span> ${R}`}[n.op];
+  if(n.neg)return sym?`<span class="cn">¬</span>${grp(body,d)}`:`<span class="cn">not</span> ${grp(body,d)}`;
+  return body;
+}
+function skel(n,top,vals){
+  if(n.k==="atom"){const s=vals?(n.a.val?"T":"F"):n.a.label;return(n.neg?"¬":"")+s}
+  const inner=`${skel(n.l,false,vals)} ${OPSYM[n.op]} ${skel(n.r,false,vals)}`;
+  if(n.neg)return`¬(${inner})`;return top?inner:`(${inner})`;
+}
+function steps(n,out){
+  if(n.k==="atom"){if(n.neg)out.push([`¬${n.a.label}`,`¬${n.a.val?"T":"F"} = ${n.v?"T":"F"}`]);return out}
+  steps(n.l,out);steps(n.r,out);
+  const lv=n.l.v?"T":"F",rv=n.r.v?"T":"F";
+  out.push([`${skel(n.l,false)} ${OPSYM[n.op]} ${skel(n.r,false)}`,`${lv} ${OPSYM[n.op]} ${rv} = ${n.raw?"T":"F"}`]);
+  if(n.neg)out.push([`¬(…)`,`¬${n.raw?"T":"F"} = ${n.v?"T":"F"}`]);
+  return out;
+}
+
+/* ---------- game loop ---------- */
+let pz,cz,answered=false,t0=0;
+function newRound(){
+  pz=genPuzzle();
+  const target=Math.random()<.5;
+  for(let i=0;i<50;i++){cz=genConclusion(pz);if(evaluate(cz.tree)===target)break}
+  answered=false;t0=performance.now();draw();
+}
+function draw(){
+  document.body.classList.toggle("hide-types",!S.showTypes);
+  $("domain").textContent=`{ ${pz.vars.join(", ")} }`;
+  $("relset").textContent=`${pz.rels.length} relation${pz.rels.length>1?"s":""}`;
+  $("premises").innerHTML=pz.premises.map((p,i)=>{
+    const t=p.rel.type;
+    const txt=p.atoms.map(([x,y])=>`<span class="v">${x}</span> <span class="rel t-${t}">${p.rel.phrase}</span> <span class="v">${y}</span>`).join(", ");
+    const note=(t==="ord"&&p.rel.conv)?`converse: ${p.rel.conv}`:t==="sym"?"symmetric, excludes self":t==="eq"?"reflexive, symmetric, transitive":"irreflexive, transitive";
+    return`<li class="prem"><span class="pn">P${i+1}</span><span class="txt">${txt}.</span><span class="meta"><span class="badge t-${t}">${TYPENAME[t]}</span>${note}</span></li>`;
+  }).join("");
+  const f=$("formula");f.classList.toggle("sym",S.symbols);
+  f.innerHTML=render(cz.tree,S.symbols,0)+"?";
+  ["T","F"].forEach(k=>{const b=$("btn-"+k);b.disabled=false;b.classList.remove("picked")});
+  $("verdict").hidden=true;
+}
+function answer(guess){
+  if(answered)return;answered=true;
+  const truthV=cz.tree.v,ok=guess===truthV,secs=((performance.now()-t0)/1000).toFixed(1);
+  stats.total++;if(ok){stats.right++;stats.streak++;stats.best=Math.max(stats.best,stats.streak)}else stats.streak=0;
+  save();drawStats();
+  ["T","F"].forEach(k=>{const b=$("btn-"+k);b.disabled=true;if((k==="T")===guess)b.classList.add("picked")});
+  const rows=cz.atoms.map(a=>`<div class="arow"><span class="lab">${a.label}</span><span class="tv ${a.val?"T":"F"}">${a.val?"T":"F"}</span><span>${atomHTML(a,false,true,S.symbols)}</span><span class="why">${a.why}</span></div>`).join("");
+  const st=steps(cz.tree,[]);
+  const stepHTML=`<div class="steps"><div><span class="k">form</span>  ${skel(cz.tree,true)}</div>${st.map(s=>`<div><span class="k">eval</span>  ${s[0]}  ⇒  ${s[1]}</div>`).join("")}</div>`;
+  const v=$("verdict");v.className="verdict "+(ok?"ok":"no");
+  v.innerHTML=`<div class="head"><h2>${ok?"Correct.":"Not quite."} It is ${truthV?"true":"false"}.</h2><span class="time">${secs}s</span><button class="next" id="btn-next">Next puzzle<kbd>↵</kbd></button></div>
+    <div><div class="eyebrow" style="margin-bottom:4px">Each statement</div><div class="atoms">${rows}</div></div>
+    <div><div class="eyebrow" style="margin-bottom:6px">Putting it together</div>${stepHTML}</div>`;
+  v.hidden=false;$("btn-next").onclick=newRound;$("btn-next").focus({preventScroll:true});
+}
+function drawStats(){
+  $("st-score").textContent=`${stats.right}/${stats.total}`;$("st-streak").textContent=stats.streak;$("st-best").textContent=stats.best;
+}
+
+/* ---------- controls ---------- */
+function syncControls(){
+  ["P","K","M"].forEach(k=>$(k+"-out").textContent=S[k]);
+  document.querySelectorAll("[data-ty]").forEach(b=>b.setAttribute("aria-pressed",!!S.types[b.dataset.ty]));
+  document.querySelectorAll("[data-c]").forEach(b=>b.setAttribute("aria-pressed",!!S.c[b.dataset.c]));
+  $("o-sym").setAttribute("aria-pressed",S.symbols);$("o-conv").setAttribute("aria-pressed",S.conv);$("o-types").setAttribute("aria-pressed",S.showTypes);$("o-self").setAttribute("aria-pressed",S.self);$("o-quant").setAttribute("aria-pressed",S.quant);
+  const vars=S.K+2;
+  $("ctl-sum").textContent=`${S.P} premise${S.P>1?"s":""} · ${S.K} each · ${vars} variables`;
+}
+["P","K","M"].forEach(k=>{
+  $(k+"-dn").onclick=()=>{if(S[k]>LIM[k][0]){S[k]--;changed()}};
+  $(k+"-up").onclick=()=>{if(S[k]<LIM[k][1]){S[k]++;changed()}};
+});
+document.querySelectorAll("[data-ty]").forEach(b=>b.onclick=()=>{
+  const t=b.dataset.ty;if(S.types[t]&&Object.values(S.types).filter(Boolean).length===1)return;S.types[t]=!S.types[t];changed()});
+document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{S.c[b.dataset.c]=!S.c[b.dataset.c];changed()});
+$("o-sym").onclick=()=>{S.symbols=!S.symbols;syncControls();save();$("formula").classList.toggle("sym",S.symbols);$("formula").innerHTML=render(cz.tree,S.symbols,0)+"?"};
+$("o-types").onclick=()=>{S.showTypes=!S.showTypes;syncControls();save();document.body.classList.toggle("hide-types",!S.showTypes)};
+$("o-conv").onclick=()=>{S.conv=!S.conv;changed()};
+$("o-self").onclick=()=>{S.self=!S.self;changed()};
+$("o-quant").onclick=()=>{S.quant=!S.quant;changed()};
+function changed(){syncControls();save();newRound()}
+$("btn-T").onclick=()=>answer(true);$("btn-F").onclick=()=>answer(false);
+document.addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(!answered&&(k==="t"||k==="f")){answer(k==="t");e.preventDefault()}
+  else if(answered&&(k==="enter"||k===" "||k==="n")){newRound();e.preventDefault()}
+});
+if(window.matchMedia&&matchMedia("(max-width:600px)").matches)$("controls").open=false;
+syncControls();drawStats();newRound();
+})();
+</script>
+
+</body></html>
